@@ -1,0 +1,149 @@
+-- Create main GUI
+local gui = Instance.new("ScreenGui")
+gui.ResetOnSpawn = false
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+gui.Name = "Shenzzz"
+gui.Parent = game:GetService("CoreGui")
+
+-- Create a container frame to hold the main frame
+local containerFrame = Instance.new("Frame")
+containerFrame.Size = UDim2.new(0, 230, 0, 300)  -- Initial size
+containerFrame.Position = UDim2.new(0.5, -115, 0.5, -150)
+containerFrame.BackgroundTransparency = 1
+containerFrame.Active = true
+containerFrame.Draggable = true
+containerFrame.Parent = gui
+
+-- Create main frame
+local frame = Instance.new("Frame")
+local yOffset = 40 -- Offset for the title bar
+local buttonHeight = 30
+local buttonSpacing = 5
+frame.Size = UDim2.new(0, 210, 0, yOffset) -- Size will adjust dynamically
+frame.Position = UDim2.new(0, 10, 0, 10)
+frame.BackgroundTransparency = 0.5
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BorderColor3 = Color3.fromRGB(0, 255, 255)
+frame.ZIndex = 9
+frame.Parent = containerFrame
+
+-- Title Bar
+local titleBarLabel = Instance.new("TextLabel")
+titleBarLabel.Name = "TitleBarLabel"
+titleBarLabel.Parent = frame
+titleBarLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+titleBarLabel.BackgroundTransparency = 0.25
+titleBarLabel.BorderSizePixel = 0
+titleBarLabel.Size = UDim2.new(1, 0, 0, 30)
+titleBarLabel.Font = Enum.Font.SourceSans
+titleBarLabel.Text = "____/GRAPKILL NI ERO\\___"
+titleBarLabel.TextColor3 = Color3.fromRGB(0, 255, 255)
+titleBarLabel.TextScaled = true
+titleBarLabel.TextWrapped = true
+titleBarLabel.TextXAlignment = Enum.TextXAlignment.Left
+titleBarLabel.ZIndex = 9
+
+-- Adjust UI for new buttons
+local function updateFrameSize()
+    frame.Size = UDim2.new(0, 210, 0, yOffset + buttonSpacing)
+end
+
+-- Create toggle buttons
+local function createToggleButton(text, toggleFunction)
+    local button = Instance.new("TextButton")
+    button.Text = text .. ": OFF"
+    button.Size = UDim2.new(0, 180, 0, buttonHeight)
+    button.Position = UDim2.new(0, 10, 0, yOffset)
+    button.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    button.BorderColor3 = Color3.fromRGB(0, 255, 255)
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.Parent = frame
+
+    yOffset = yOffset + buttonHeight + buttonSpacing
+    updateFrameSize()
+
+    local isEnabled = false
+
+    button.MouseButton1Click:Connect(function()
+        isEnabled = not isEnabled
+        button.Text = text .. ": " .. (isEnabled and "ON" or "OFF")
+        toggleFunction(isEnabled)
+    end)
+end
+
+-- Damage Size Toggle
+createToggleButton("DED", function(isEnabled)
+    game.Workspace.Pit.Damage.Size = isEnabled and Vector3.new(42, 2000, 2000) or Vector3.new(0, 0, 0)
+end)
+
+-- Touch Toggle
+createToggleButton("TOUCH", function(isEnabled)
+    for _, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.CanCollide = not isEnabled
+            v.CanTouch = not isEnabled
+        end
+    end
+end)
+
+-- No Ragdoll Toggle
+createToggleButton("NoRagdoll", function(isEnabled)
+    if isEnabled then
+        local LocalPlayer = game.Players.LocalPlayer
+        if LocalPlayer.Character:FindFirstChild("ragdollValue") then
+            LocalPlayer.Character.ragdollValue:Destroy()
+        end
+    end
+end)
+
+-- Boost Touch Detector Toggle
+createToggleButton("BOOSTTOUCH", function(isEnabled)
+    local touchDetector = game:GetService("Workspace").Map.Cool.Boosts.Jump.touchDetector
+    touchDetector.Size = isEnabled and Vector3.new(4000, 4000, 4000) or Vector3.new(1, 1, 1)
+end)
+
+-- Speed Script Toggle
+createToggleButton("GiveSpeed", function(isEnabled)
+    local touchDetector = game:GetService("Workspace").Map.Cool.Boosts.Speed.touchDetector
+    touchDetector.Size = isEnabled and Vector3.new(2000, 2000, 2000) or Vector3.new(1, 1, 1)
+end)
+
+-- Grapple Length Toggle
+local executingGrapple = false
+createToggleButton("GrappleLength", function(isEnabled)
+    executingGrapple = isEnabled
+    spawn(function()
+        while executingGrapple do
+            wait(0.005)
+            game:GetService("ReplicatedStorage").Events.Remote.Client.changeRopeLength:FireServer(-1)
+        end
+    end)
+end)
+
+-- Fling Toggle
+local executingFling = false
+createToggleButton("Fling", function(isEnabled)
+    executingFling = isEnabled
+end)
+
+-- Detect Grapple and Fling Player
+local function onGrapple(targetPlayer)
+    if executingFling and targetPlayer then
+        local character = targetPlayer.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            character.HumanoidRootPart.Velocity = Vector3.new(math.random(-500, 500), 1000, math.random(-500, 500))
+        end
+    end
+end
+
+spawn(function()
+    while true do
+        wait(0.1)
+        if executingGrapple then
+            local targetPlayer = game.Players:GetPlayers()[math.random(1, #game.Players)]
+            if targetPlayer ~= game.Players.LocalPlayer then
+                onGrapple(targetPlayer)
+            end
+        end
+    end
+end)
