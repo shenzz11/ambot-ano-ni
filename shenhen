@@ -7,48 +7,83 @@ gui.Parent = game:GetService("CoreGui")
 
 -- Create a container frame to hold the main frame
 local containerFrame = Instance.new("Frame")
-containerFrame.Size = UDim2.new(0, 230, 0, 300)  -- Initial size
-containerFrame.Position = UDim2.new(0.5, -115, 0.5, -150)
-containerFrame.BackgroundTransparency = 1
+containerFrame.Size = UDim2.new(0, 230, 0, 300) -- Adjusted size
+containerFrame.Position = UDim2.new(0.5, -115, 0.5, -150) -- Adjusted position
+containerFrame.BackgroundTransparency = 1 -- Make the container frame transparent
 containerFrame.Active = true
 containerFrame.Draggable = true
 containerFrame.Parent = gui
 
--- Create main frame
+-- Create main frame with updated design
 local frame = Instance.new("Frame")
-local yOffset = 40 -- Offset for the title bar
+local yOffset = 40 -- Increased to account for the title bar
 local buttonHeight = 30
 local buttonSpacing = 5
-frame.Size = UDim2.new(0, 210, 0, yOffset) -- Size will adjust dynamically
-frame.Position = UDim2.new(0, 10, 0, 10)
+local totalHeight = 6 * buttonHeight + 6 * buttonSpacing + yOffset -- Adjusted total height
+local totalWidth = 210 -- Adjusted width
+frame.Size = UDim2.new(0, totalWidth, 0, totalHeight)
+frame.Position = UDim2.new(0, 10, 0, 10) -- Adjusted position
 frame.BackgroundTransparency = 0.5
 frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 frame.BorderColor3 = Color3.fromRGB(0, 255, 255)
 frame.ZIndex = 9
 frame.Parent = containerFrame
 
--- Title Bar
+-- Create Title Bar
 local titleBarLabel = Instance.new("TextLabel")
 titleBarLabel.Name = "TitleBarLabel"
-titleBarLabel.Parent = frame
+titleBarLabel.Parent = frame -- Changed parent to frame
 titleBarLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 titleBarLabel.BackgroundTransparency = 0.25
+titleBarLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
 titleBarLabel.BorderSizePixel = 0
 titleBarLabel.Size = UDim2.new(1, 0, 0, 30)
 titleBarLabel.Font = Enum.Font.SourceSans
 titleBarLabel.Text = "____/GRAPKILL NI ERO\\___"
 titleBarLabel.TextColor3 = Color3.fromRGB(0, 255, 255)
 titleBarLabel.TextScaled = true
+titleBarLabel.TextSize = 14.000
 titleBarLabel.TextWrapped = true
 titleBarLabel.TextXAlignment = Enum.TextXAlignment.Left
 titleBarLabel.ZIndex = 9
 
--- Adjust UI for new buttons
-local function updateFrameSize()
-    frame.Size = UDim2.new(0, 210, 0, yOffset + buttonSpacing)
-end
+-- Create a separate container frame for the assistive touch button
+local assistiveTouchFrame = Instance.new("Frame")
+assistiveTouchFrame.Size = UDim2.new(0, 50, 0, 50) -- Adjusted size
+assistiveTouchFrame.Position = UDim2.new(1, -60, 0, 10) -- Positioned at the upper right corner
+assistiveTouchFrame.AnchorPoint = Vector2.new(1, 0) -- Adjusted anchor point for correct positioning
+assistiveTouchFrame.BackgroundTransparency = 1 -- Make the container frame transparent
+assistiveTouchFrame.Active = true
+assistiveTouchFrame.Draggable = true -- Made the frame draggable
+assistiveTouchFrame.Parent = gui
 
--- Create toggle buttons
+-- Create Assistive Touch Button
+local assistiveTouch = Instance.new("TextButton")
+assistiveTouch.Text = "G"
+assistiveTouch.TextSize = 24
+assistiveTouch.Size = UDim2.new(0, 30, 0, 30)
+assistiveTouch.Position = UDim2.new(0.5, -15, 0, 10) -- Center the button in the frame
+assistiveTouch.BackgroundColor3 = Color3.fromRGB(30, 30, 30) -- Changed to match the main frame
+assistiveTouch.TextColor3 = Color3.fromRGB(0, 255, 255) -- Text color to match the main frame
+assistiveTouch.Parent = assistiveTouchFrame
+
+local collapsed = true
+
+assistiveTouch.MouseButton1Click:Connect(function()
+    collapsed = not collapsed
+    frame.Visible = not collapsed
+    containerFrame.Active = not collapsed
+    containerFrame.Draggable = not collapsed
+
+    -- Adjust transparency to ensure it doesn't block interactions when collapsed
+    if collapsed then
+        frame.BackgroundTransparency = 1
+    else
+        frame.BackgroundTransparency = 0.5
+    end
+end)
+
+-- Function to create toggle buttons
 local function createToggleButton(text, toggleFunction)
     local button = Instance.new("TextButton")
     button.Text = text .. ": OFF"
@@ -60,7 +95,6 @@ local function createToggleButton(text, toggleFunction)
     button.Parent = frame
 
     yOffset = yOffset + buttonHeight + buttonSpacing
-    updateFrameSize()
 
     local isEnabled = false
 
@@ -69,81 +103,27 @@ local function createToggleButton(text, toggleFunction)
         button.Text = text .. ": " .. (isEnabled and "ON" or "OFF")
         toggleFunction(isEnabled)
     end)
+
+    return button
 end
 
--- Damage Size Toggle
-createToggleButton("DED", function(isEnabled)
-    game.Workspace.Pit.Damage.Size = isEnabled and Vector3.new(42, 2000, 2000) or Vector3.new(0, 0, 0)
-end)
-
--- Touch Toggle
-createToggleButton("TOUCH", function(isEnabled)
-    for _, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
-        if v:IsA("BasePart") then
-            v.CanCollide = not isEnabled
-            v.CanTouch = not isEnabled
-        end
-    end
-end)
-
--- No Ragdoll Toggle
-createToggleButton("NoRagdoll", function(isEnabled)
-    if isEnabled then
-        local LocalPlayer = game.Players.LocalPlayer
-        if LocalPlayer.Character:FindFirstChild("ragdollValue") then
-            LocalPlayer.Character.ragdollValue:Destroy()
-        end
-    end
-end)
-
--- Boost Touch Detector Toggle
-createToggleButton("BOOSTTOUCH", function(isEnabled)
-    local touchDetector = game:GetService("Workspace").Map.Cool.Boosts.Jump.touchDetector
-    touchDetector.Size = isEnabled and Vector3.new(4000, 4000, 4000) or Vector3.new(1, 1, 1)
-end)
-
--- Speed Script Toggle
-createToggleButton("GiveSpeed", function(isEnabled)
-    local touchDetector = game:GetService("Workspace").Map.Cool.Boosts.Speed.touchDetector
-    touchDetector.Size = isEnabled and Vector3.new(2000, 2000, 2000) or Vector3.new(1, 1, 1)
-end)
-
--- Grapple Length Toggle
-local executingGrapple = false
-createToggleButton("GrappleLength", function(isEnabled)
-    executingGrapple = isEnabled
-    spawn(function()
-        while executingGrapple do
-            wait(0.005)
-            game:GetService("ReplicatedStorage").Events.Remote.Client.changeRopeLength:FireServer(-1)
-        end
-    end)
-end)
-
--- Fling Toggle
-local executingFling = false
-createToggleButton("Fling", function(isEnabled)
-    executingFling = isEnabled
-end)
-
--- Detect Grapple and Fling Player
-local function onGrapple(targetPlayer)
-    if executingFling and targetPlayer then
-        local character = targetPlayer.Character
-        if character and character:FindFirstChild("HumanoidRootPart") then
-            character.HumanoidRootPart.Velocity = Vector3.new(math.random(-500, 500), 1000, math.random(-500, 500))
-        end
-    end
-end
-
-spawn(function()
-    while true do
-        wait(0.1)
-        if executingGrapple then
-            local targetPlayer = game.Players:GetPlayers()[math.random(1, #game.Players)]
-            if targetPlayer ~= game.Players.LocalPlayer then
-                onGrapple(targetPlayer)
+-- DED Feature: Kill grapplers
+local function killGrappler()
+    local ropeConstraints = game.Workspace:GetDescendants()
+    for _, obj in pairs(ropeConstraints) do
+        if obj:IsA("RopeConstraint") and obj.Attachment1 and obj.Attachment1.Parent == game.Players.LocalPlayer.Character then
+            local grappler = obj.Attachment0.Parent
+            if grappler and grappler:FindFirstChild("Humanoid") then
+                grappler.Humanoid.Health = 0 -- Kill the grappler
             end
         end
     end
-end)
+end
+
+local function toggleDED(isEnabled)
+    if isEnabled then
+        game:GetService("RunService").Heartbeat:Connect(killGrappler)
+    end
+end
+
+createToggleButton("DED", toggleDED)
